@@ -271,6 +271,15 @@ static void BarMainStartPlayback (BarApp_t *app, pthread_t *playerThread) {
 		pthread_mutex_init (&app->player.pauseMutex, NULL);
 		pthread_cond_init (&app->player.pauseCond, NULL);
 
+        /* Setup dump directories. */
+        sprintf(app->player.dump_filename, "%s", app->playlist->artist);
+        mkdir(app->player.dump_filename, S_IRWXU | S_IRWXG);
+        strcat(app->player.dump_filename, "/");
+        strcat(app->player.dump_filename, app->playlist->album);
+        mkdir(app->player.dump_filename, S_IRWXU | S_IRWXG);
+        strcat(app->player.dump_filename, "/");
+        strcat(app->player.dump_filename, app->playlist->title);
+
 		/* throw event */
 		BarUiStartEventCmd (&app->settings, "songstart",
 				app->curStation, app->playlist, &app->player, app->ph.stations,

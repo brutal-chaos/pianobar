@@ -54,6 +54,9 @@ struct audioPlayer {
 	unsigned char channels;
 	unsigned char aoError;
 
+    FILE *dump_handle;
+    char dump_filename[1024 * 2];
+
 	enum {
 		PLAYER_FREED = 0, /* thread is not running */
 		PLAYER_STARTING, /* thread is starting */

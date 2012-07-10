@@ -139,6 +139,9 @@ static WaitressCbReturn_t BarPlayerAACCb (void *ptr, size_t size,
 	const char *data = ptr;
 	struct audioPlayer *player = stream;
 
+    if (player->dump_handle != NULL) {
+        fwrite(data, size, 1, player->dump_handle);
+    }
 	if (BarPlayerCheckPauseQuit (player) ||
 			!BarPlayerBufferFill (player, data, size)) {
 		return WAITRESS_CB_RET_ERR;
@@ -473,6 +476,8 @@ void *BarPlayerThread (void *data) {
 		    conf->downMatrix = 1;
 			NeAACDecSetConfiguration(player->aacHandle, conf);
 
+            strcat(player->dump_filename, ".aac");
+
 			player->waith.callback = BarPlayerAACCb;
 			break;
 		#endif /* ENABLE_FAAD */
@@ -482,6 +487,8 @@ void *BarPlayerThread (void *data) {
 			mad_stream_init (&player->mp3Stream);
 			mad_frame_init (&player->mp3Frame);
 			mad_synth_init (&player->mp3Synth);
+
+            strcat(player->dump_filename, ".mp3");
 
 			player->waith.callback = BarPlayerMp3Cb;
 			break;
@@ -493,6 +500,13 @@ void *BarPlayerThread (void *data) {
 			goto cleanup;
 			break;
 	}
+
+    /* If we can read the file, then it already exists so don't re-write. */
+    if (access(player->dump_filename, R_OK)) {
+        player->dump_handle = fopen(player->dump_filename, "w");
+    } else {
+        player->dump_handle = NULL;
+    }
 	
 	player->mode = PLAYER_INITIALIZED;
 
@@ -526,6 +540,11 @@ void *BarPlayerThread (void *data) {
 			assert (0);
 			break;
 	}
+
+    if (player->dump_handle != NULL) {
+        fclose(player->dump_handle);
+    }
+
 
 	if (player->aoError) {
 		ret = (void *) PLAYER_RET_HARDFAIL;
